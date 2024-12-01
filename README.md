@@ -76,7 +76,13 @@ The top 10 features contributing to the model:
 - `total_pymnt`
 - `int_rate`
 - `loan_amnt`
-- ...
+- `all_util`
+- `recoveries`
+- `total_bal_il`
+- `open_act_il`
+- `il_util`
+- `last_pymnt_d`
+- `max_bal_bc`
 
 ---
 
