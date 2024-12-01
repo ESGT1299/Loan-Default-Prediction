@@ -1,0 +1,27 @@
+# Exclude temporary files
+*.tmp
+*.log
+
+# Ignore datasets and model files
+*.zip
+*.pkl
+dataset/
+
+# Exclude Python virtual environment
+venv/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Exclude compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+
+# Exclude Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Exclude IDE configuration files
+.vscode/
+.idea/
