@@ -32,7 +32,7 @@ The dataset contains over 2 million records with details on loans issued by Lend
 - `int_rate`: The interest rate of the loan.
 - `loan_status`: The status of the loan, such as "Fully Paid" or "Charged Off."
 
-### **Source**: [Kaggle LendingClub Dataset]([https://www.kaggle.com/](https://www.kaggle.com/datasets/wordsforthewise/lending-club))
+### **Source**: [Kaggle LendingClub Dataset](https://www.kaggle.com/datasets/wordsforthewise/lending-club)
 
 ---
 
