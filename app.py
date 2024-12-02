@@ -1,29 +1,3 @@
-# import streamlit as st
-# import joblib
-# import numpy as np
-
-# # Load the trained model
-# model = joblib.load('loan_default_model.pkl')
-
-# # Streamlit app UI
-# st.title("Loan Default Prediciton")
-
-
-# # Input field for he user
-# loan_amount = st.number_input("Loan Amount", min_value=0, step=1000)
-# annual_income = st.number_input("Annual Income", min_value=0, step=1000)
-# dti = st.number_input("Debt-to-Income Ratio", min_value=0.0, step=0.1)
-
-
-# # Feature array
-# features = np.array([[loan_amount, annual_income, dti]])
-
-
-# # Prediction button
-# if st.button("Predict"):
-#     prediction = model.predict(features)
-#     st.write("Prediction: ", "Default" if prediction[0] == 1 else "No Default")
-
 import streamlit as st
 import pandas as pd
 import joblib
