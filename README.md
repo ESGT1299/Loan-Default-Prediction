@@ -1,11 +1,7 @@
 # **Loan Default Prediction Project**
 
 ## **Overview**
-<<<<<<< HEAD
-This project predicts the likelihood of loan defaults based on a dataset of historical loan data. The dataset was sourced from [Kaggle](https://www.kaggle.com/datasets/wordsforthewise/lending-club), and the project uses **Python**, **Scikit-learn**, and **Streamlit** to preprocess data, build predictive models, and create an interactive dashboard.
-=======
 This project predicts the likelihood of loan defaults based on a dataset of historical loan data. The dataset was sourced from [Kaggle]([https://www.kaggle.com/](https://www.kaggle.com/datasets/wordsforthewise/lending-club)), and the project uses **Python**, **Scikit-learn**, and **Streamlit** to preprocess data, build predictive models, and create an interactive dashboard.
->>>>>>> c340d367a0ad26904be0d2dff36a3a32273bd748
 
 ---
 
@@ -19,11 +15,6 @@ This project predicts the likelihood of loan defaults based on a dataset of hist
 7. [Project Structure](#project-structure)
 8. [How to Run the Project](#how-to-run-the-project)
 9. [Future Enhancements](#future-enhancements)
-<<<<<<< HEAD
-10. [References](#references)
-=======
-
->>>>>>> c340d367a0ad26904be0d2dff36a3a32273bd748
 
 ---
 
@@ -40,11 +31,7 @@ The dataset contains over 2 million records with details on loans issued by Lend
 - `int_rate`: The interest rate of the loan.
 - `loan_status`: The status of the loan, such as "Fully Paid" or "Charged Off."
 
-<<<<<<< HEAD
-### **Source**: [Kaggle LendingClub Dataset](https://www.kaggle.com/)
-=======
 ### **Source**: [Kaggle LendingClub Dataset](https://www.kaggle.com/datasets/wordsforthewise/lending-club)
->>>>>>> c340d367a0ad26904be0d2dff36a3a32273bd748
 
 ---
 
@@ -88,9 +75,6 @@ The top 10 features contributing to the model:
 - `total_pymnt`
 - `int_rate`
 - `loan_amnt`
-<<<<<<< HEAD
-- ...
-=======
 - `all_util`
 - `recoveries`
 - `total_bal_il`
@@ -98,7 +82,6 @@ The top 10 features contributing to the model:
 - `il_util`
 - `last_pymnt_d`
 - `max_bal_bc`
->>>>>>> c340d367a0ad26904be0d2dff36a3a32273bd748
 
 ---
 
@@ -146,8 +129,4 @@ Provide input values and view predictions
 ## **Future Enhancements**
 - Integrate SQL for database management.
 - Create visualizations using Tableau.
-<<<<<<< HEAD
 - Improve model performance by experimenting with XGBoost or LightGBM.
-=======
-- Improve model performance by experimenting with XGBoost or LightGBM.
->>>>>>> c340d367a0ad26904be0d2dff36a3a32273bd748
