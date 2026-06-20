@@ -1,66 +1,62 @@
-import pandas as pd 
+"""Generate a lightweight exploratory report from LendingClub data."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 
-# Load the dataset
-data = pd.read_csv('dataset/accepted_2007_to_2018Q4.csv/accepted_2007_to_2018Q4.csv')
-
-# View the first few rows
-print(data.head())
-
-# Understand the data
-print(data.info())
-print(data.describe())
-
-# Check for missing values
-print(data.isnull().sum())
-
-# Set plot size and style
-plt.figure(figsize=(10, 6))
-sns.set_style("whitegrid")
-
-# Plot histogram
-sns.histplot(data['loan_amnt'], bins=30, color="skyblue", kde=True)
-
-# Add titles and labels
-plt.title("Loan Amount Distribution", fontsize=16, fontweight='bold')
-plt.xlabel("Loan Amount ($)", fontsize=12)
-plt.ylabel("Frequency", fontsize=12)
-plt.xticks(fontsize=10)
-plt.yticks(fontsize=10)
-plt.tight_layout()
-
-# Save the plot as an image for your portfolio
-plt.savefig("Loan_Amount_Distribution.png", dpi=300)
-plt.show()
+from src.loan_default_risk.data import load_originated_loans
+from src.loan_default_risk.features import DEFAULT_LABEL, TARGET_COLUMN
 
 
-# Filter numerical columns only
-numerical_data = data.select_dtypes(include=["Float64","int64"])
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Explore the LendingClub modeling dataset.")
+    parser.add_argument("--data", required=True, help="CSV file or folder containing accepted loans.")
+    parser.add_argument("--sample-size", type=int, default=50_000)
+    parser.add_argument("--output-dir", default="artifacts/eda")
+    return parser.parse_args()
 
-# Calculate correlation matrix
-correlation_matrix = numerical_data.corr()
 
-# Set plot size and style
-plt.figure(figsize=(18, 14))
-sns.set_style("whitegrid")
+def main() -> None:
+    args = parse_args()
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-# Create heatmap with annotations
-sns.heatmap(
-    correlation_matrix,
-    annot=False,  # Set to True if you want numbers on the heatmap
-    cmap='coolwarm',
-    linewidths=0.5,
-    linecolor='gray',
-    cbar_kws={'label': 'Correlation Coefficient'}
-)
+    data = load_originated_loans(args.data, sample_size=args.sample_size)
+    default_rate = (data[TARGET_COLUMN] == DEFAULT_LABEL).mean()
+    summary = pd.DataFrame(
+        {
+            "metric": ["rows", "columns", "default_rate", "start_date", "end_date"],
+            "value": [
+                len(data),
+                len(data.columns),
+                default_rate,
+                data["issue_d"].min().strftime("%Y-%m"),
+                data["issue_d"].max().strftime("%Y-%m"),
+            ],
+        }
+    )
+    summary.to_csv(output_dir / "dataset_summary.csv", index=False)
 
-# Add titles and labels
-plt.title("Correlation Heatmap", fontsize=18, fontweight='bold')
-plt.xticks(rotation=45, ha='right', fontsize=10)  # Rotate and align x-axis labels to the right
-plt.yticks(fontsize=10)  # Keep y-axis labels unchanged
-plt.tight_layout()  # Automatically adjust padding to prevent overlap
+    sns.set_theme(style="whitegrid")
+    figure, axes = plt.subplots(1, 2, figsize=(13, 5))
+    sns.histplot(data=data, x="loan_amnt", bins=35, ax=axes[0], color="#2563eb")
+    axes[0].set(title="Loan Amount Distribution", xlabel="Loan Amount")
 
-# Save the plot as an image for your portfolio
-plt.savefig("Correlation_Heatmap.png", dpi=300)
-plt.show()
+    outcome_counts = data[TARGET_COLUMN].value_counts().rename_axis("Outcome").reset_index(name="Loans")
+    sns.barplot(data=outcome_counts, x="Outcome", y="Loans", ax=axes[1], color="#0f766e")
+    axes[1].set(title="Resolved Loan Outcomes", xlabel="")
+
+    figure.tight_layout()
+    figure.savefig(output_dir / "portfolio_overview.png", dpi=180)
+    plt.close(figure)
+    print(summary.to_string(index=False))
+    print(f"Saved EDA outputs to {output_dir}")
+
+
+if __name__ == "__main__":
+    main()

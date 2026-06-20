@@ -6,11 +6,15 @@
 *.zip
 *.pkl
 dataset/
+datos de kaggle/
+artifacts/*
+!artifacts/loan_default_pipeline.joblib
 
 # Exclude .png files
 *.png
 # Exclude Python virtual environment
 venv/
+.venv/
 
 # Ignore system files
 .DS_Store
