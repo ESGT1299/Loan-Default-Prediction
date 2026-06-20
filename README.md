@@ -249,11 +249,6 @@ The current tests verify:
 
 GitHub Actions runs the unit tests and Python compilation checks on every push and pull request.
 
-## Code Notes
-
-- `from __future__ import annotations` is a standard Python import, not an external library. It postpones type-hint evaluation and keeps modern Python annotations cleaner.
-- The old `test_file.py` was a scratch file and has been removed. Real tests now live in `tests/test_feature_policy.py`.
-
 ## Limitations
 
 - This project is for applied learning, portfolio demonstration, and technical interview discussion. It is not financial, legal, or credit advice.
