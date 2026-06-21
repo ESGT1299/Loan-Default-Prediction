@@ -1,17 +1,32 @@
 """Streamlit app for loan default risk scoring."""
 
-from __future__ import annotations
-
 from pathlib import Path
 
 import joblib
 import pandas as pd
 import streamlit as st
 
-from src.loan_default_risk.features import DEFAULT_LABEL
+from src.loan_default_risk.features import DEFAULT_LABEL, NON_DEFAULT_LABEL
 from src.loan_default_risk.modeling import get_default_probabilities
 
 ARTIFACT_PATH = Path("artifacts/loan_default_pipeline.joblib")
+
+NUMERIC_INPUT_CONFIG = {
+    "loan_amnt": {"min_value": 500, "max_value": 100_000, "step": 500},
+    "int_rate": {"min_value": 0.0, "max_value": 50.0, "step": 0.1},
+    "annual_inc": {"min_value": 0, "max_value": 10_000_000, "step": 1_000},
+    "dti": {"min_value": 0.0, "max_value": 100.0, "step": 0.1},
+    "delinq_2yrs": {"min_value": 0, "max_value": 50, "step": 1},
+    "fico_range_low": {"min_value": 300, "max_value": 850, "step": 1},
+    "inq_last_6mths": {"min_value": 0, "max_value": 50, "step": 1},
+    "open_acc": {"min_value": 0, "max_value": 100, "step": 1},
+    "pub_rec": {"min_value": 0, "max_value": 50, "step": 1},
+    "revol_bal": {"min_value": 0, "max_value": 10_000_000, "step": 500},
+    "revol_util": {"min_value": 0.0, "max_value": 200.0, "step": 0.1},
+    "total_acc": {"min_value": 0, "max_value": 200, "step": 1},
+    "mort_acc": {"min_value": 0, "max_value": 50, "step": 1},
+    "pub_rec_bankruptcies": {"min_value": 0, "max_value": 20, "step": 1},
+}
 
 FIELD_LABELS = {
     "loan_amnt": "Loan Amount",
@@ -24,12 +39,11 @@ FIELD_LABELS = {
     "home_ownership": "Home Ownership",
     "annual_inc": "Annual Income",
     "verification_status": "Income Verification",
-    "issue_d": "Loan Issue Date",
     "purpose": "Loan Purpose",
     "dti": "Debt-to-Income Ratio (%)",
     "delinq_2yrs": "Delinquencies in Last 2 Years",
     "earliest_cr_line": "Earliest Credit Line",
-    "fico_range_low": "FICO Score Low",
+    "fico_range_low": "FICO Score",
     "fico_range_high": "FICO Score High",
     "inq_last_6mths": "Recent Credit Inquiries",
     "open_acc": "Open Credit Accounts",
@@ -54,12 +68,11 @@ HELP_TEXT = {
     "home_ownership": "Borrower's housing status.",
     "annual_inc": "Borrower's stated annual income.",
     "verification_status": "Whether income was verified by the platform.",
-    "issue_d": "Approximate month the loan was issued.",
     "purpose": "Main reason for the loan.",
     "dti": "Monthly debt payments divided by monthly income.",
     "delinq_2yrs": "Number of recent credit delinquencies.",
     "earliest_cr_line": "Oldest credit account month.",
-    "fico_range_low": "Lower bound of the FICO score range.",
+    "fico_range_low": "Lower bound of the LendingClub FICO score range.",
     "fico_range_high": "Upper bound of the FICO score range.",
     "inq_last_6mths": "Credit pulls in the last six months.",
     "open_acc": "Currently open credit lines.",
@@ -78,20 +91,17 @@ PROFILES = {
         "loan_amnt": 15000,
         "term": " 36 months",
         "int_rate": 13.5,
-        "installment": 510,
         "grade": "C",
         "sub_grade": "C2",
         "emp_length": "10+ years",
         "home_ownership": "MORTGAGE",
         "annual_inc": 72000,
         "verification_status": "Source Verified",
-        "issue_d": "Jan-2016",
         "purpose": "debt_consolidation",
         "dti": 18.5,
         "delinq_2yrs": 0,
         "earliest_cr_line": "Jan-2004",
         "fico_range_low": 680,
-        "fico_range_high": 684,
         "inq_last_6mths": 1,
         "open_acc": 11,
         "pub_rec": 0,
@@ -107,20 +117,17 @@ PROFILES = {
         "loan_amnt": 10000,
         "term": " 36 months",
         "int_rate": 7.9,
-        "installment": 313,
         "grade": "A",
         "sub_grade": "A4",
         "emp_length": "10+ years",
         "home_ownership": "MORTGAGE",
         "annual_inc": 115000,
         "verification_status": "Verified",
-        "issue_d": "Jan-2016",
         "purpose": "home_improvement",
         "dti": 9.5,
         "delinq_2yrs": 0,
         "earliest_cr_line": "Jun-1998",
         "fico_range_low": 740,
-        "fico_range_high": 744,
         "inq_last_6mths": 0,
         "open_acc": 9,
         "pub_rec": 0,
@@ -136,20 +143,17 @@ PROFILES = {
         "loan_amnt": 28000,
         "term": " 60 months",
         "int_rate": 22.0,
-        "installment": 775,
         "grade": "E",
         "sub_grade": "E2",
         "emp_length": "< 1 year",
         "home_ownership": "RENT",
         "annual_inc": 52000,
         "verification_status": "Not Verified",
-        "issue_d": "Jan-2016",
         "purpose": "debt_consolidation",
         "dti": 31.0,
         "delinq_2yrs": 2,
         "earliest_cr_line": "Sep-2011",
         "fico_range_low": 660,
-        "fico_range_high": 664,
         "inq_last_6mths": 4,
         "open_acc": 18,
         "pub_rec": 1,
@@ -221,7 +225,6 @@ BASIC_FIELDS = [
     "loan_amnt",
     "term",
     "int_rate",
-    "installment",
     "grade",
     "sub_grade",
     "annual_inc",
@@ -230,13 +233,11 @@ BASIC_FIELDS = [
     "purpose",
     "dti",
     "fico_range_low",
-    "fico_range_high",
     "revol_util",
 ]
 
 ADVANCED_FIELDS = [
     "emp_length",
-    "issue_d",
     "earliest_cr_line",
     "delinq_2yrs",
     "inq_last_6mths",
@@ -256,18 +257,36 @@ def label_for(field: str) -> str:
     return FIELD_LABELS.get(field, field.replace("_", " ").title())
 
 
-def risk_band(probability: float, threshold: float) -> tuple[str, str]:
-    """Map default probability into a simple analyst-facing risk band."""
-    if probability < threshold * 0.75:
-        return "Lower estimated risk", "success"
-    if probability < threshold * 1.25:
-        return "Moderate estimated risk", "warning"
-    return "Higher estimated risk", "error"
+def threshold_status(probability: float, threshold: float) -> tuple[str, str]:
+    """Describe the score relative to the model's review threshold."""
+    if probability < threshold:
+        return "Below review threshold", "success"
+    return "Above review threshold", "error"
 
 
-def select_index(options: list, value) -> int:
-    """Return the selected index for Streamlit selectboxes."""
-    return options.index(value) if value in options else 0
+def load_profile() -> None:
+    """Load every widget value from the selected example profile."""
+    profile = PROFILES[st.session_state["profile_selector"]]
+    for field, value in profile.items():
+        st.session_state[f"input_{field}"] = value
+
+
+def keep_subgrade_consistent() -> None:
+    """Reset subgrade when the selected grade changes."""
+    grade = st.session_state["input_grade"]
+    subgrade_key = "input_sub_grade"
+    if not str(st.session_state.get(subgrade_key, "")).startswith(grade):
+        st.session_state[subgrade_key] = f"{grade}1"
+
+
+def monthly_payment(principal: float, annual_rate: float, term: str) -> float:
+    """Calculate the contractual monthly payment from amount, rate, and term."""
+    months = int(term.strip().split()[0])
+    monthly_rate = annual_rate / 1200
+    if monthly_rate == 0:
+        return principal / months
+    growth = (1 + monthly_rate) ** months
+    return principal * monthly_rate * growth / (growth - 1)
 
 
 def render_input(field: str, defaults: dict) -> object:
@@ -276,40 +295,54 @@ def render_input(field: str, defaults: dict) -> object:
     help_text = HELP_TEXT.get(field)
     default_value = defaults.get(field)
 
+    widget_key = f"input_{field}"
+    if widget_key not in st.session_state:
+        st.session_state[widget_key] = default_value
+
     if field in CATEGORICAL_OPTIONS:
         options = CATEGORICAL_OPTIONS[field]
+        if field == "sub_grade":
+            grade = st.session_state.get("input_grade", str(default_value)[0])
+            options = [f"{grade}{number}" for number in range(1, 6)]
+            if st.session_state[widget_key] not in options:
+                st.session_state[widget_key] = options[0]
         return st.selectbox(
             label,
             options=options,
-            index=select_index(options, default_value),
+            key=widget_key,
             format_func=lambda value: OPTION_LABELS.get(value, value),
             help=help_text,
+            on_change=keep_subgrade_consistent if field == "grade" else None,
         )
 
-    if field in {"issue_d", "earliest_cr_line"}:
-        return st.text_input(label, value=str(default_value), help=help_text)
+    if field == "earliest_cr_line":
+        return st.text_input(label, key=widget_key, help=help_text)
 
-    if isinstance(default_value, int):
-        return st.number_input(label, value=int(default_value), step=1, help=help_text)
+    config = NUMERIC_INPUT_CONFIG.get(field, {})
+    return st.number_input(label, key=widget_key, help=help_text, **config)
 
-    return st.number_input(label, value=float(default_value), step=0.1, help=help_text)
+
+@st.cache_resource
+def load_artifact(path: Path) -> dict:
+    """Load and cache the trained model artifact."""
+    return joblib.load(path)
 
 
 st.set_page_config(page_title="Loan Default Risk", layout="wide")
 st.title("Loan Default Risk Scoring")
 st.caption(
-    "Professional portfolio project for credit-risk-style modeling. "
-    "This score is not a real approval or denial decision."
+    "Estimate default probability from borrower and loan information available near origination. "
+    "The result supports analysis and is not an approval or denial decision."
 )
 
 if not ARTIFACT_PATH.exists():
     st.warning(
         "Model artifact not found. Train the model first with: "
-        '`python model_training.py --data "datos de kaggle" --sample-size 50000`'
+        '`python model_training.py --data "dataset/accepted_2007_to_2018Q4.csv" --sample-size 100000`'
     )
     st.stop()
 
-artifact = joblib.load(ARTIFACT_PATH)
+artifact = load_artifact(ARTIFACT_PATH)
 model = artifact["model"]
 features = artifact["features"]
 metrics = artifact.get("metrics", {})
@@ -327,13 +360,21 @@ with st.sidebar:
         st.metric("Brier Score", f"{metrics.get('brier_score', 0):.3f}")
         st.caption("Probability calibration error: lower is better.")
     st.divider()
-    st.write("Use the profiles below as realistic starting points. You do not need to manually fill every field.")
+    st.write("Use an example profile as a starting point, then adjust the fields you want to explore.")
 
 scoring_page, performance_page = st.tabs(["Score a Loan", "Model Performance"])
 
 with scoring_page:
     st.subheader("Borrower and Loan Profile")
-    profile_name = st.selectbox("Start with an example profile", list(PROFILES.keys()))
+    if "profile_selector" not in st.session_state:
+        st.session_state["profile_selector"] = "Typical borrower"
+        load_profile()
+    profile_name = st.selectbox(
+        "Start with an example profile",
+        list(PROFILES.keys()),
+        key="profile_selector",
+        on_change=load_profile,
+    )
     defaults = PROFILES[profile_name].copy()
 
     st.info(
@@ -352,6 +393,15 @@ with scoring_page:
             if field in features:
                 with basic_columns[index % 2]:
                     values[field] = render_input(field, values)
+        values["installment"] = round(
+            monthly_payment(values["loan_amnt"], values["int_rate"], values["term"]),
+            2,
+        )
+        values["fico_range_high"] = min(values["fico_range_low"] + 4, 850)
+        st.caption(
+            f"Calculated monthly installment: ${values['installment']:,.2f} | "
+            f"FICO range used by the model: {values['fico_range_low']}-{values['fico_range_high']}"
+        )
 
     with advanced_tab:
         st.caption("These fields come from the original LendingClub application data.")
@@ -379,14 +429,14 @@ with scoring_page:
 
     if st.button("Score Loan", type="primary"):
         default_probability = float(get_default_probabilities(model, input_df)[0])
-        band_label, band_style = risk_band(default_probability, decision_threshold)
+        status_label, status_style = threshold_status(default_probability, decision_threshold)
 
         st.subheader("Risk Estimate")
         metric_column, band_column = st.columns([1, 2])
         with metric_column:
             st.metric("Estimated Default Probability", f"{default_probability:.1%}")
         with band_column:
-            getattr(st, band_style)(band_label)
+            getattr(st, status_style)(status_label)
 
         st.progress(min(max(default_probability, 0.0), 1.0))
         if default_probability >= decision_threshold:
@@ -475,7 +525,7 @@ with performance_page:
     if isinstance(score_sample, pd.DataFrame) and not score_sample.empty:
         distribution = score_sample.copy()
         distribution["Outcome"] = distribution["actual"].map(
-            {DEFAULT_LABEL: "Default", "non_default": "Non-Default"}
+            {DEFAULT_LABEL: "Default", NON_DEFAULT_LABEL: "Non-Default"}
         )
         distribution["Score Range"] = pd.cut(
             distribution["default_probability"],

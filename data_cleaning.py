@@ -1,7 +1,5 @@
 """Create a cleaned modeling dataset from the raw LendingClub CSV."""
 
-from __future__ import annotations
-
 import argparse
 from pathlib import Path
 

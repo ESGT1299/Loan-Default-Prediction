@@ -1,7 +1,5 @@
 """Model training, calibration, evaluation, and explainability."""
 
-from __future__ import annotations
-
 from pathlib import Path
 
 import joblib
@@ -17,7 +15,6 @@ from sklearn.metrics import (
     brier_score_loss,
     classification_report,
     confusion_matrix,
-    f1_score,
     precision_recall_curve,
     roc_auc_score,
 )
@@ -25,7 +22,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 from .data import load_originated_loans, split_features_target
-from .features import DATE_COLUMN, DEFAULT_LABEL
+from .features import DATE_COLUMN, DEFAULT_LABEL, NON_DEFAULT_LABEL
 
 
 def build_pipeline(X: pd.DataFrame) -> Pipeline:
@@ -64,18 +61,30 @@ def temporal_split(
     train_fraction: float = 0.70,
     calibration_fraction: float = 0.15,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Split loans chronologically into train, calibration, and test sets."""
+    """Split loans by complete issue months into train, calibration, and test sets."""
     if train_fraction + calibration_fraction >= 1:
         raise ValueError("Train and calibration fractions must leave data for testing.")
 
     ordered = data.sort_values(DATE_COLUMN).reset_index(drop=True)
-    train_end = int(len(ordered) * train_fraction)
-    calibration_end = int(len(ordered) * (train_fraction + calibration_fraction))
-    return (
-        ordered.iloc[:train_end].copy(),
-        ordered.iloc[train_end:calibration_end].copy(),
-        ordered.iloc[calibration_end:].copy(),
-    )
+    monthly_counts = ordered.groupby(DATE_COLUMN).size().sort_index()
+    cumulative_share = monthly_counts.cumsum() / monthly_counts.sum()
+
+    calibration_start = cumulative_share[cumulative_share >= train_fraction].index[0]
+    test_start = cumulative_share[
+        cumulative_share >= train_fraction + calibration_fraction
+    ].index[0]
+
+    train = ordered[ordered[DATE_COLUMN] < calibration_start].copy()
+    calibration = ordered[
+        (ordered[DATE_COLUMN] >= calibration_start)
+        & (ordered[DATE_COLUMN] < test_start)
+    ].copy()
+    test = ordered[ordered[DATE_COLUMN] >= test_start].copy()
+
+    if train.empty or calibration.empty or test.empty:
+        raise ValueError("Temporal split produced an empty dataset partition.")
+
+    return train, calibration, test
 
 
 def get_default_probabilities(model, X: pd.DataFrame) -> np.ndarray:
@@ -110,7 +119,7 @@ def evaluate_model(
     """Evaluate discrimination, calibration, threshold behavior, and score distribution."""
     probabilities = get_default_probabilities(model, X_test)
     y_default = (y_test == DEFAULT_LABEL).astype(int)
-    predictions = np.where(probabilities >= threshold, DEFAULT_LABEL, "non_default")
+    predictions = np.where(probabilities >= threshold, DEFAULT_LABEL, NON_DEFAULT_LABEL)
 
     fraction_positive, mean_predicted = calibration_curve(
         y_default,
@@ -121,7 +130,7 @@ def evaluate_model(
     report = classification_report(
         y_test,
         predictions,
-        labels=[DEFAULT_LABEL, "non_default"],
+        labels=[DEFAULT_LABEL, NON_DEFAULT_LABEL],
         output_dict=True,
         zero_division=0,
     )
@@ -141,9 +150,9 @@ def evaluate_model(
         "confusion_matrix": confusion_matrix(
             y_test,
             predictions,
-            labels=[DEFAULT_LABEL, "non_default"],
+            labels=[DEFAULT_LABEL, NON_DEFAULT_LABEL],
         ).tolist(),
-        "class_order": [DEFAULT_LABEL, "non_default"],
+        "class_order": [DEFAULT_LABEL, NON_DEFAULT_LABEL],
         "calibration_curve": {
             "mean_predicted_probability": mean_predicted.tolist(),
             "observed_default_rate": fraction_positive.tolist(),

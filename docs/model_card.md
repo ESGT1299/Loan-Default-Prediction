@@ -2,13 +2,12 @@
 
 ## Model Summary
 
-This model estimates the probability that an originated LendingClub loan ends in a default-like resolved status. It is a portfolio project demonstrating leakage-aware feature design, temporal validation, probability calibration, model evaluation, and Streamlit deployment.
+This model estimates the probability that an originated LendingClub loan ends in a default-like resolved status.
 
 ## Intended Use
 
-- Educational and portfolio analysis
-- Technical interviews and project demonstrations
-- Exploration of credit-risk-style modeling workflows
+- Model development and validation research
+- Demonstration of credit-risk-style modeling workflows
 - Comparison of borrower and loan profiles
 
 ## Out-of-Scope Use
@@ -44,8 +43,8 @@ The loan issue date is used to create chronological datasets but is not used as 
 - Estimator: class-weighted Random Forest
 - Probability calibration: sigmoid calibration
 - Validation:
-  - training: 2007-07 to 2016-03
-  - calibration: 2016-03 to 2017-02
+  - training: 2007-07 to 2016-02
+  - calibration: 2016-03 to 2017-01
   - test: 2017-02 to 2018-12
 - Decision threshold: selected on calibration data to maximize default-class F1
 
@@ -53,19 +52,19 @@ The loan issue date is used to create chronological datasets but is not used as 
 
 | Metric | Value |
 |---|---:|
-| ROC-AUC | 0.702 |
+| ROC-AUC | 0.699 |
 | PR-AUC | 0.368 |
 | Brier score | 0.153 |
-| Threshold | 0.270 |
-| Default precision | 0.338 |
-| Default recall | 0.617 |
-| Default F1 | 0.436 |
+| Threshold | 0.243 |
+| Default precision | 0.322 |
+| Default recall | 0.683 |
+| Default F1 | 0.437 |
 
-These values reflect the saved artifact trained on June 17, 2026. Results may change when the training sample or model configuration changes.
+These values reflect the saved artifact trained on June 20, 2026. Results may change when the training sample or model configuration changes.
 
 ## Interpretation
 
-The output is a calibrated model estimate based on historical patterns. A score above the selected threshold indicates that the profile should receive additional analytical review in this demonstration workflow. It is not an automatic rejection rule.
+The output is a calibrated model estimate based on historical patterns. A score above the selected threshold indicates that the profile should receive additional analytical review. It is not an automatic rejection rule.
 
 Permutation importance in the dashboard shows global model sensitivity. It does not establish causality and does not explain a specific applicant by itself.
 
@@ -77,7 +76,7 @@ Permutation importance in the dashboard shows global model sensitivity. It does 
 - Protected attributes are not intentionally modeled, but other variables may act as proxies.
 - Calibration can deteriorate over time under economic or policy changes.
 - The model has not undergone legal, compliance, fairness, stress, or production validation.
-- The 100,000-row source sample is suitable for portfolio demonstration but is not the full dataset.
+- The trained artifact uses a 100,000-row source sample rather than the full dataset.
 
 ## Required Controls Before Production
 

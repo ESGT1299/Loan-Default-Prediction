@@ -1,7 +1,5 @@
 """Data loading and preprocessing helpers."""
 
-from __future__ import annotations
-
 from pathlib import Path
 
 import numpy as np
@@ -12,8 +10,8 @@ from .features import (
     DEFAULT_STATUSES,
     NON_DEFAULT_LABEL,
     NON_DEFAULT_STATUSES,
-    ORIGINATION_FEATURES,
     MODEL_FEATURES,
+    ORIGINATION_FEATURES,
     TARGET_COLUMN,
     validate_feature_policy,
 )

@@ -77,25 +77,6 @@ ORIGINATION_FEATURES = [
 
 MODEL_FEATURES = [feature for feature in ORIGINATION_FEATURES if feature != DATE_COLUMN]
 
-NUMERIC_FEATURES = [
-    "loan_amnt",
-    "int_rate",
-    "installment",
-    "annual_inc",
-    "dti",
-    "delinq_2yrs",
-    "fico_range_low",
-    "fico_range_high",
-    "inq_last_6mths",
-    "open_acc",
-    "pub_rec",
-    "revol_bal",
-    "revol_util",
-    "total_acc",
-    "mort_acc",
-    "pub_rec_bankruptcies",
-]
-
 
 def validate_feature_policy(features: list[str]) -> None:
     """Raise when the proposed model feature set includes leakage columns."""

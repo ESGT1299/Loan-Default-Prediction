@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from src.loan_default_risk.data import make_binary_target, normalize_percent, resolve_accepted_loans_path
 from src.loan_default_risk.features import (
     LEAKAGE_COLUMNS,
-    NUMERIC_FEATURES,
+    MODEL_FEATURES,
     ORIGINATION_FEATURES,
     validate_feature_policy,
 )
@@ -19,8 +19,8 @@ class FeaturePolicyTests(unittest.TestCase):
     def test_origin_features_do_not_include_known_leakage(self):
         self.assertFalse(set(ORIGINATION_FEATURES).intersection(LEAKAGE_COLUMNS))
 
-    def test_numeric_features_are_part_of_origin_feature_policy(self):
-        self.assertTrue(set(NUMERIC_FEATURES).issubset(ORIGINATION_FEATURES))
+    def test_model_features_are_part_of_origin_feature_policy(self):
+        self.assertTrue(set(MODEL_FEATURES).issubset(ORIGINATION_FEATURES))
 
     def test_validate_feature_policy_rejects_leakage(self):
         with self.assertRaises(ValueError):
@@ -54,6 +54,26 @@ class FeaturePolicyTests(unittest.TestCase):
         self.assertLess(train["issue_d"].max(), calibration["issue_d"].min())
         self.assertLess(calibration["issue_d"].max(), test["issue_d"].min())
         self.assertEqual(len(train) + len(calibration) + len(test), len(data))
+
+    def test_temporal_split_keeps_each_month_in_one_partition(self):
+        issue_dates = pd.to_datetime(
+            ["2019-01"] * 8
+            + ["2019-02"] * 8
+            + ["2019-03"] * 8
+            + ["2019-04"] * 8
+            + ["2019-05"] * 8
+        )
+        data = pd.DataFrame(
+            {
+                "issue_d": issue_dates,
+                "loan_status": ["default", "non_default"] * 20,
+            }
+        )
+        partitions = temporal_split(data, train_fraction=0.5, calibration_fraction=0.25)
+        month_sets = [set(frame["issue_d"]) for frame in partitions]
+        self.assertTrue(month_sets[0].isdisjoint(month_sets[1]))
+        self.assertTrue(month_sets[1].isdisjoint(month_sets[2]))
+        self.assertTrue(month_sets[0].isdisjoint(month_sets[2]))
 
     def test_threshold_is_a_valid_probability(self):
         target = pd.Series(["default", "default", "non_default", "non_default"])

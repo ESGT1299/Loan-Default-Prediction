@@ -1,10 +1,4 @@
-"""Train the loan default model.
-
-Usage:
-    python model_training.py --data dataset/accepted_2007_to_2018Q4.csv
-"""
-
-from __future__ import annotations
+"""Train and evaluate the loan default risk model."""
 
 import argparse
 import json
